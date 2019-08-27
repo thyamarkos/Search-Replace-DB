@@ -753,17 +753,17 @@ class icit_srdb {
 	 *
 	 * @param string $from       String we're looking to replace.
 	 * @param string $to         What we want it to be replaced with
-	 * @param array  $data       Used to pass any subordinate arrays back to in.
+	 * @param mixed  $data       Used to pass any subordinate arrays back to in.
 	 * @param bool   $serialised Does the array passed via $data need serialising.
 	 *
-	 * @return array	The original array with all elements replaced as needed.
+	 * @return mixed The original array with all elements replaced as needed.
 	 */
 	public function recursive_unserialize_replace( $from = '', $to = '', $data = '', $serialised = false ) {
 
 		// some unserialised data cannot be re-serialised eg. SimpleXMLElements
 		try {
 
-			if ( is_string( $data ) && ( $unserialized = @unserialize( $data ) ) !== false ) {
+			if ( is_string( $data ) && ( $unserialized = @unserialize( $data , [ 'allowed_classes' => true ] ) ) !== false ) {
 				$data = $this->recursive_unserialize_replace( $from, $to, $unserialized, true );
 			}
 
@@ -783,7 +783,7 @@ class icit_srdb {
 				$_tmp = $data; // new $data_class( );
 				$props = get_object_vars( $data );
 				foreach ( $props as $key => $value ) {
-					$_tmp->$key = $this->recursive_unserialize_replace( $from, $to, $value, false );
+					$_tmp->{$key} = $this->recursive_unserialize_replace( $from, $to, $value, false );
 				}
 
 				$data = $_tmp;
@@ -797,8 +797,7 @@ class icit_srdb {
 				}
 			}
 
-			if ( $serialised )
-				return serialize( $data );
+			if ( $serialised ) return serialize( $data );
 
 		} catch( Exception $error ) {
 
@@ -893,7 +892,7 @@ class icit_srdb {
 					case 'utf32':
 						//$encoding = 'utf8';
 						$this->add_error( "The table \"{$table}\" is encoded using \"{$encoding}\" which is currently unsupported.", 'results' );
-						continue;
+						// continue;
 						break;
 
 					default:

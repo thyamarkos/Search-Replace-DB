@@ -31,6 +31,7 @@ $opts = array(
     'e:' => 'alter-engine:',
     'a:' => 'alter-collation:',
     'v:' => 'verbose:',
+    'wordpresspath:',
     'port:',
     'help'
 );
@@ -130,6 +131,10 @@ ARGS
     Changes the database table to the specified collation
     eg. utf8_unicode_ci. If specified search/replace arguments
     are ignored. They will not be run simultaneously.
+  --wordpresspath
+    Optional disk path to your wordpress installation. If this is
+    provided and wp-load.php is found, the script will try to load
+    the wordpress classes also.
   -v, --verbose [true|false]
     Defaults to true, can be set to false to run script silently.
   --help
@@ -202,6 +207,16 @@ foreach ($options as $key => $value) {
     $args[$key] = $value;
 }
 
+if (empty($options['wordpresspath'])) {
+    $options['wordpresspath'] = realpath(dirname(__DIR__) . "/wp-load.php");
+} else {
+    $options['wordpresspath'] = realpath($options['wordpresspath'] . "/wp-load.php");
+}
+if (file_exists($options['wordpresspath']) && is_file($options['wordpresspath']) && is_readable($options['wordpresspath'])) {
+    // bootstrap wordpress resources using wp-load
+    require_once $options['wordpresspath'];
+}
+
 // modify the log output
 class icit_srdb_cli extends icit_srdb
 {
@@ -231,7 +246,7 @@ class icit_srdb_cli extends icit_srdb
                 break;
             case 'search_replace_table_end':
                 list($table, $report) = $args;
-                $time = number_format($report['end'] - $report['start'], 8);
+                $time = @number_format($report['end'] - $report['start'], 8);
                 if ($time < 0){
                     $time = $time * -1;
                 }
@@ -245,7 +260,7 @@ class icit_srdb_cli extends icit_srdb
                 if (is_array($replace)) {
                     $replace = implode(' or ', $replace);
                 }
-                $time = number_format($report['end'] - $report['start'], 8);
+                $time = @number_format($report['end'] - $report['start'], 8);
                 if ($time < 0){
                     $time = $time * -1;
                 }
